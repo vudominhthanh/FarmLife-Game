@@ -1,0 +1,191 @@
+x-spring-common-env: &spring-common-env
+  SPRING_DATA_REDIS_HOST: redis
+  SPRING_DATA_REDIS_PORT: 6379
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  JWT_SECRET: ${JWT_SECRET}
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: api-gateway
+    container_name: farmlife-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8080
+      REDIS_HOST: redis
+      IDENTITY_SERVICE_URI: http://identity-service:8082
+      WORLD_SERVICE_URI: http://world-service:8083
+      ECONOMY_SERVICE_URI: http://economy-service:8084
+      SOCIAL_QUEST_SERVICE_URI: http://social-quest-service:8085
+      ANALYTICS_SERVICE_URI: http://analytics-service:8086
+      MEDIA_SERVICE_URI: http://media-service:8087
+      AI_SERVICE_URI: http://ai-service:8088
+      REALTIME_SERVICE_WS_URI: ws://realtime-service:8081
+    networks:
+      - farmlife-net
+
+  realtime-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: realtime-service
+    container_name: farmlife-realtime-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8081
+    networks:
+      - farmlife-net
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/identity-service
+    container_name: farmlife-identity-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/identity_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - farmlife-net
+
+  world-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/world-service
+    container_name: farmlife-world-service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/world_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - farmlife-net
+
+  economy-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/economy-service
+    container_name: farmlife-economy-service
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/economy_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - farmlife-net
+
+  social-quest-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/social-quest-service
+    container_name: farmlife-social-quest-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/social_quest_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - farmlife-net
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/analytics-service
+    container_name: farmlife-analytics-service
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/analytics_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - farmlife-net
+
+  media-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/media-service
+    container_name: farmlife-media-service
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8087
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/media_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    networks:
+      - farmlife-net
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_PATH: services/ai-service
+    container_name: farmlife-ai-service
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      <<: *spring-common-env
+      SERVER_PORT: 8088
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ai_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+    networks:
+      - farmlife-net
+
+networks:
+  farmlife-net:
+    external: true

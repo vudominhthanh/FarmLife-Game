@@ -1,0 +1,91 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            exposedHeaders:
+              - X-Player-Id
+              - Idempotency-Key
+            allowCredentials: true
+            maxAge: 3600
+
+      routes:
+        # 1. Identity Service (Port 8082)
+        - id: identity-service
+          uri: ${IDENTITY_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/auth/**, /api/v1/players/**, /api/v1/identity/**
+
+        # 2. World Service (Port 8083)
+        - id: world-service
+          uri: ${WORLD_SERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/world/**
+
+        # 3. Economy Service (Port 8084)
+        - id: economy-service
+          uri: ${ECONOMY_SERVICE_URI:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/economy/**, /api/v1/market/**
+
+        # 4. Social & Quest Service (Port 8085)
+        - id: social-quest-service
+          uri: ${SOCIAL_QUEST_SERVICE_URI:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/social/**, /api/v1/quests/**, /api/v1/chat/**
+
+        # 5. Media Service (Port 8086)
+        - id: media-service
+          uri: ${MEDIA_SERVICE_URI:http://localhost:8086}
+          predicates:
+            - Path=/api/v1/media/**, /bootstrap
+
+        # 6. Analytics Service (Port 8087)
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URI:http://localhost:8087}
+          predicates:
+            - Path=/api/v1/analytics/**
+
+        # 7. AI Service (Port 8088)
+        - id: ai-service
+          uri: ${AI_SERVICE_URI:http://localhost:8088}
+          predicates:
+            - Path=/api/v1/ai/**
+
+        # 8. Realtime WebSocket Service (Port 8081)
+        - id: realtime-service-ws
+          uri: ${REALTIME_SERVICE_WS_URI:ws://localhost:8081}
+          predicates:
+            - Path=/ws-farmlife/**, /ws/**
+
+farmlife:
+  jwt:
+    secret: ${JWT_SECRET:FarmLifeSuperSecretKeyForJwtSigningMustBeAtLeast256BitsLong2026!}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

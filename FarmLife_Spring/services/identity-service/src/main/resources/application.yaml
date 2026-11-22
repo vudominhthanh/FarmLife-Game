@@ -1,0 +1,43 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: identity-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/identity_db?currentSchema=identity
+    username: ${POSTGRES_USER:farmlife}
+    password: ${POSTGRES_PASSWORD:farmlife_secret}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: identity
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    schemas: public,identity
+    default-schema: identity
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+
+farmlife:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:FarmLifeSuperSecretKeyForJwtSigningMustBeAtLeast256BitsLong2026!}
+      access-token-expiration-ms: 86400000
+      refresh-token-expiration-ms: 604800000
+    max-failed-attempts: 5
+    lock-duration-minutes: 15
